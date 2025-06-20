@@ -1,0 +1,24 @@
+# Python / Django ignores
+__pycache__/
+*.py[cod]
+*.sqlite3
+*.log
+*.pot
+*.pyc
+*.pyo
+*.pyd
+
+# Django specific
+/static/
+/media/
+.env
+.env.*local
+!*.env.sample
+.DS_Store
+
+# Virtual environments
+venv/
+.env/
+
+# OS generated files
+Thumbs.db

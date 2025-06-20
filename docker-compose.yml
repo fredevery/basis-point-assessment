@@ -1,0 +1,39 @@
+# BasisPoint Project Docker Compose
+# See .project/spec_sections/ENVIRONMENT.md for details
+version: '3.8'
+services:
+  server:
+    build: ./server
+    container_name: basispoint_server
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./server/.env
+    volumes:
+      - ./server:/app
+    depends_on:
+      - db
+  client:
+    build: ./client
+    container_name: basispoint_client
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./client/.env
+    volumes:
+      - ./client:/app
+    depends_on:
+      - server
+  db:
+    image: postgres:15
+    container_name: basispoint_db
+    environment:
+      POSTGRES_DB: basispoint
+      POSTGRES_USER: basispoint
+      POSTGRES_PASSWORD: basispoint
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+volumes:
+  db_data:
