@@ -1,0 +1,18 @@
+version: '3'
+
+tasks:
+  "server:sh":
+    desc: Run the server Docker container using Docker Compose and SSH into it
+    cmds:
+      - docker compose run --rm -it server /bin/sh
+    interactive: true
+  
+  "server:build":
+    desc: Build the server Docker image using Docker Compose
+    cmds:
+      - docker compose build server
+  
+  "server:migrate":
+    desc: Run Django migrations in the server container
+    cmds:
+      - docker compose run --rm server python manage.py migrate

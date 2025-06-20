@@ -1,6 +1,3 @@
-# BasisPoint Project Docker Compose
-# See .project/spec_sections/ENVIRONMENT.md for details
-version: '3.8'
 services:
   server:
     build: ./server
