@@ -3,7 +3,7 @@
 This repository contains the technical assessment solution for the James Bond Ping Mission.
 
 ## Project Structure
-- `client/` — Nuxt.js frontend
+- `client/` — Vue frontend
 - `server/` — Django backend
 - `docker-compose.yml` — Orchestrates frontend, backend, and database
 
