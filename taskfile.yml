@@ -22,6 +22,11 @@ tasks:
     cmds:
       - docker compose build server
 
+  "server:makemigrations":
+    desc: Run Django makemigrations in the server container
+    cmds:
+      - docker compose run --rm server python manage.py makemigrations
+
   "server:migrate":
     desc: Run Django migrations in the server container
     cmds:
@@ -31,6 +36,11 @@ tasks:
     desc: Run the server Docker container using Docker Compose and SSH into it
     cmds:
       - docker compose run --rm -it server /bin/sh
+  
+  "server:test":
+    desc: Run Django tests in the server container
+    cmds:
+      - docker compose run --rm server python manage.py test
       
   "server:up":
     desc: Start the server service using Docker Compose in detached mode
