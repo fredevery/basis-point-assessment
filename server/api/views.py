@@ -1,4 +1,6 @@
-from rest_framework import status
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, permissions, status, viewsets
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import (
@@ -7,7 +9,11 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 
-from .serializers import RegisterSerializer
+from .models import Ping
+from .permissions import IsOwnerOrReadOnly
+from .serializers import PingSerializer, RegisterSerializer
+
+LATEST_PINGS_COUNT = 3
 
 
 def set_refresh_token_cookie(response, refresh_token):
@@ -68,3 +74,43 @@ class RegisterView(APIView):
                 status=status.HTTP_201_CREATED,
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PingViewSet(viewsets.ModelViewSet):
+    queryset = Ping.objects.all()
+    serializer_class = PingSerializer
+    permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_fields = ["user", "timestamp"]
+    ordering_fields = ["timestamp", "latitude", "longitude"]
+    ordering = ["-timestamp"]
+
+    @action(
+        detail=False, methods=["get"], permission_classes=[permissions.IsAuthenticated]
+    )
+    def latest(self, request):
+        latest_pings = self.queryset.order_by("-timestamp")[:LATEST_PINGS_COUNT]
+        serializer = self.get_serializer(latest_pings, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="respond",
+        permission_classes=[permissions.IsAuthenticated],
+    )
+    def respond(self, request, pk=None):
+        parent_ping = self.get_object()
+        user = request.user
+        data = request.data.copy()
+        data.update(
+            {
+                "user": user.id,
+                "parent_ping": parent_ping.id,
+            }
+        )
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        header = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=header)

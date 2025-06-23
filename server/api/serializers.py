@@ -1,7 +1,8 @@
+from django.contrib.auth import password_validation as validators
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
 
-from .models import User
+from .models import Ping, User
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -18,6 +19,7 @@ class RegisterSerializer(serializers.ModelSerializer):
     def validate_password(self, value):
         try:
             User.objects.model().set_password(value)
+            validators.validate_password(password=value, user=User())
         except DjangoValidationError as e:
             raise serializers.ValidationError(e.messages)
         return value
@@ -30,3 +32,9 @@ class RegisterSerializer(serializers.ModelSerializer):
             code_name=validated_data.get("code_name", ""),
         )
         return user
+
+
+class PingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ping
+        fields = "__all__"
