@@ -67,12 +67,12 @@ class CustomTokenBlacklistView(TokenBlacklistView):
 class RegisterView(APIView):
     def post(self, request, *args, **kwargs):
         serializer = RegisterSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(
-                {"message": "User registered successfully"},
-                status=status.HTTP_201_CREATED,
-            )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(
+            {"message": "User registered successfully"},
+            status=status.HTTP_201_CREATED,
+        )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

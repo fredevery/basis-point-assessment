@@ -139,7 +139,10 @@ class AuthTests(APITestCase):
             self.login_url,
             {"email": self.user_email, "password": "WrongPass123!"},
         )
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertIn("error", response.data)
+        self.assertEqual(response.data["error"]["code"], "authentication_failed")
+        self.assertIn("message", response.data["error"])
         self.assertNotIn("access", response.data)
 
     def test_refresh_token(self):
@@ -179,29 +182,49 @@ class RegistrationTests(APITestCase):
         )
         response = self.client.post(self.register_url, self.valid_data)
         self.assertEqual(response.status_code, 400)
-        self.assertIn("A user with that email already exists.", response.data["email"])
+        self.assertIn("error", response.data)
+        self.assertEqual(response.data["error"]["code"], "validation_error")
+        self.assertIn("email", response.data["error"]["details"])
+        self.assertIn(
+            "A user with that email already exists.",
+            response.data["error"]["details"]["email"],
+        )
 
     def test_register_missing_fields(self):
         incomplete_data = self.valid_data.copy()
         incomplete_data["email"] = ""  # Missing email
         response = self.client.post(self.register_url, incomplete_data)
         self.assertEqual(response.status_code, 400)
-        self.assertIn("This field may not be blank.", response.data["email"])
+        self.assertIn("error", response.data)
+        self.assertEqual(response.data["error"]["code"], "validation_error")
+        self.assertIn("email", response.data["error"]["details"])
+        self.assertIn(
+            "This field may not be blank.", response.data["error"]["details"]["email"]
+        )
 
     def test_register_invalid_email(self):
         invalid_data = self.valid_data.copy()
         invalid_data["email"] = "invalid-email"
         response = self.client.post(self.register_url, invalid_data)
         self.assertEqual(response.status_code, 400)
-        self.assertIn("Enter a valid email address.", response.data["email"])
+        self.assertIn("error", response.data)
+        self.assertEqual(response.data["error"]["code"], "validation_error")
+        self.assertIn("email", response.data["error"]["details"])
+        self.assertIn(
+            "Enter a valid email address.", response.data["error"]["details"]["email"]
+        )
 
     def test_register_weak_password(self):
         weak_data = self.valid_data.copy()
         weak_data["password"] = "123"
         response = self.client.post(self.register_url, weak_data)
         self.assertEqual(response.status_code, 400)
+        self.assertIn("error", response.data)
+        self.assertEqual(response.data["error"]["code"], "validation_error")
+        self.assertIn("password", response.data["error"]["details"])
         self.assertIn(
-            "This password is too short.", " ".join(response.data["password"])
+            "This password is too short.",
+            " ".join(response.data["error"]["details"]["password"]),
         )
 
 
@@ -224,7 +247,9 @@ class PingAPITests(APITestCase):
     def test_unauthenticated_user_cannot_create_ping(self):
         data = {"latitude": 12.34, "longitude": 56.78}
         response = self.client.post(self.ping_list_url, data)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.status_code, 401)
+        self.assertIn("error", response.data)
+        self.assertEqual(response.data["error"]["code"], "not_authenticated")
 
     def test_authenticated_user_can_retrieve_ping(self):
         self.client.force_authenticate(user=self.user)
@@ -244,10 +269,9 @@ class PingAPITests(APITestCase):
         self.client.force_authenticate(user=self.other_user)
         data = {"latitude": 77.77}
         response = self.client.patch(self.ping_detail_url, data)
-        # Adjust expected status if you implement custom permissions
-        self.assertIn(
-            response.status_code, [status.HTTP_403_FORBIDDEN, status.HTTP_404_NOT_FOUND]
-        )
+        self.assertEqual(response.status_code, 401)
+        self.assertIn("error", response.data)
+        self.assertEqual(response.data["error"]["code"], "not_authenticated")
 
     def test_authenticated_user_can_delete_own_ping(self):
         self.client.force_authenticate(user=self.user)
@@ -258,17 +282,25 @@ class PingAPITests(APITestCase):
     def test_authenticated_user_cannot_delete_others_ping(self):
         self.client.force_authenticate(user=self.other_user)
         response = self.client.delete(self.ping_detail_url)
-        self.assertIn(
-            response.status_code, [status.HTTP_403_FORBIDDEN, status.HTTP_404_NOT_FOUND]
-        )
+        self.assertEqual(response.status_code, 403)
+        self.assertIn("error", response.data)
+        self.assertEqual(response.data["error"]["code"], "permission_denied")
 
     def test_unauthenticated_user_cannot_access_ping_endpoints(self):
         response = self.client.get(self.ping_list_url)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.status_code, 401)
+        self.assertIn("error", response.data)
+        self.assertEqual(response.data["error"]["code"], "not_authenticated")
+
         response = self.client.post(self.ping_list_url, {"latitude": 1, "longitude": 2})
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.status_code, 401)
+        self.assertIn("error", response.data)
+        self.assertEqual(response.data["error"]["code"], "not_authenticated")
+
         response = self.client.get(self.ping_detail_url)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.status_code, 401)
+        self.assertIn("error", response.data)
+        self.assertEqual(response.data["error"]["code"], "not_authenticated")
 
     def test_latest_endpoint_returns_last_three_pings(self):
         self.client.force_authenticate(user=self.user)
@@ -299,7 +331,9 @@ class PingAPITests(APITestCase):
         url = reverse("ping-respond", args=[parent_ping.id])
         data = {"latitude": 51.0, "longitude": 61.0}
         response = self.client.post(url, data)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.status_code, 401)
+        self.assertIn("error", response.data)
+        self.assertEqual(response.data["error"]["code"], "not_authenticated")
 
     def test_ping_list_filter_by_user(self):
         self.client.force_authenticate(user=self.user)
