@@ -34,6 +34,13 @@ class RegisterSerializer(serializers.ModelSerializer):
         return user
 
 
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ("id", "email", "name", "code_name")
+        read_only_fields = ("id",)
+
+
 class PingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ping

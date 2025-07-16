@@ -16,6 +16,18 @@ tasks:
     desc: Start the client service using Docker Compose in detached mode
     cmds:
       - docker compose up client
+  
+  "dc":
+    desc: Run Docker Compose commands
+    cmds:
+      - docker compose {{.CLI_ARGS}}
+    interactive: true
+  
+  "dj":
+    desc: Run Django management commands in the server container
+    cmds:
+      - docker compose run --rm server python manage.py {{.CLI_ARGS}}
+    interactive: true
 
   "server:build":
     desc: Build the server Docker image using Docker Compose

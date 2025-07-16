@@ -2,6 +2,7 @@ from django.urls import path
 from rest_framework import routers
 
 from .views import (
+    CurrentUserView,
     CustomTokenBlacklistView,
     CustomTokenObtainPairView,
     CustomTokenRefreshView,
@@ -17,4 +18,5 @@ urlpatterns = [
     path("auth/refresh/", CustomTokenRefreshView.as_view(), name="token_refresh"),
     path("auth/logout/", CustomTokenBlacklistView.as_view(), name="token_blacklist"),
     path("auth/register/", RegisterView.as_view(), name="register"),
+    path("auth/current_user/", CurrentUserView.as_view(), name="current_user"),
 ] + router.urls

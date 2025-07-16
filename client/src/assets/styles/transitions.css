@@ -1,0 +1,17 @@
+/* .vertical-slide-enter-active,
+.vertical-slide-leave-active {
+  transition: transform 500ms ease-in-out;
+}
+
+.vertical-slide-enter-from,
+.vertical-slide-leave-to {
+  transform: translateY(100%);
+}
+
+.vertical-slide-leave-from {
+  transform: translateY(0);
+}
+
+.vertical-slide-enter-to {
+  transform: translateY(0);
+} */

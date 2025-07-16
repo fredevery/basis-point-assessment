@@ -47,14 +47,16 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
     code_name = models.CharField(
         max_length=30,
+        unique=True,
         blank=True,
         validators=[
             RegexValidator(
-                regex=r"^[a-zA-Z0-9_.-]*$",
+                regex=r"^[a-zA-Z0-9]*$",
                 message="Code name must be alphanumeric or contain underscores, dots, or hyphens.",
                 code="invalid_code_name",
             )
         ],
+        error_messages={"unique": "A user with that code name already exists."},
     )
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
@@ -63,7 +65,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     objects = UserManager()
 
-    USERNAME_FIELD = "email"
+    USERNAME_FIELD = "code_name"
     REQUIRED_FIELDS = []
 
     def __str__(self):

@@ -1,0 +1,24 @@
+@import url('https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&family=Doto:wght@100..900&display=swap');
+
+html {
+  width: 100vw;
+  height: 100dvh;
+}
+body {
+  position: relative;
+  height: 100dvh;
+  width: 100vw;
+  background-image: radial-gradient(
+    circle at center,
+    var(--primary-color) 0%,
+    var(--secondary-color) 100%
+  );
+  /* background-image: radial-gradient(circle at center, #f0f0f0 0%, #afafaf 100%), url('@/assets/scan-lines.svg'); */
+  font-family: 'Courier Prime', monospace;
+  font-optical-sizing: auto;
+  font-weight: normal;
+  font-style: normal;
+  font-variation-settings: 'ROND' 0;
+  color: var(--primary-color);
+  font-size: 18px;
+}

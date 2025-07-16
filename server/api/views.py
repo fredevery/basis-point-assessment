@@ -3,15 +3,16 @@ from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework_simplejwt.views import (
     TokenBlacklistView,
     TokenObtainPairView,
     TokenRefreshView,
 )
 
-from .models import Ping
+from .models import Ping, User
 from .permissions import IsOwnerOrReadOnly
-from .serializers import PingSerializer, RegisterSerializer
+from .serializers import PingSerializer, RegisterSerializer, UserSerializer
 
 LATEST_PINGS_COUNT = 3
 
@@ -30,13 +31,33 @@ def set_refresh_token_cookie(response, refresh_token):
     return response
 
 
+def attach_user_to_response(response):
+    access_token = response.data.get("access", None)
+    if access_token:
+        try:
+            token = AccessToken(access_token)
+            user_id = token["user_id"]
+            user = User.objects.get(id=user_id)
+            response.data["user"] = UserSerializer(user).data
+            response.data["user"] = UserSerializer(user).data
+        except Exception:
+            # Optionally log or handle error
+            pass
+    return response
+
+
 class CustomTokenObtainPairView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
-        response = super().post(request, *args, **kwargs)
+        try:
+            response = super().post(request, *args, **kwargs)
+        except Exception as e:
+            print("Error in CustomTokenObtainPairView:", e)
+            raise e
         if response.status_code == 200:
             response = set_refresh_token_cookie(
                 response, response.data.get("refresh", None)
             )
+            attach_user_to_response(response)
         return response
 
 
@@ -46,10 +67,12 @@ class CustomTokenRefreshView(TokenRefreshView):
         if refresh_token:
             request.data["refresh"] = refresh_token
         response = super().post(request, *args, **kwargs)
-        if response.status_code == 200 and "refresh" in response.data:
-            response = set_refresh_token_cookie(
-                response, response.data.get("refresh", None)
-            )
+        if response.status_code == 200:
+            if "refresh" in response.data:
+                response = set_refresh_token_cookie(
+                    response, response.data.get("refresh", None)
+                )
+            attach_user_to_response(response)
         return response
 
 
@@ -74,6 +97,18 @@ class RegisterView(APIView):
             status=status.HTTP_201_CREATED,
         )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CurrentUserView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        """
+        Returns the authenticated user's data.
+        Reference: .project/SPEC.md - User API requirements
+        """
+        serializer = UserSerializer(request.user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class PingViewSet(viewsets.ModelViewSet):

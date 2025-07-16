@@ -1,0 +1,100 @@
+/* Modern CSS Reset
+  Reference: https://github.com/hankchizljaw/modern-css-reset
+  See .project/SPEC.md: "UI Consistency" section
+*/
+
+/* Box sizing reset */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Remove default margin */
+body,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+figure,
+blockquote,
+dl,
+dd {
+  margin: 0;
+}
+
+/* Remove list styles on ul, ol elements with a list role */
+ul[role='list'],
+ol[role='list'] {
+  list-style: none;
+}
+
+/* Set core body defaults */
+body {
+  min-height: 100vh;
+  text-rendering: optimizeSpeed;
+  line-height: 1.5;
+}
+
+/* Remove default padding */
+ul,
+ol {
+  padding: 0;
+}
+
+/* Remove default button styles */
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  margin: 0;
+}
+
+/* Remove all animations and transitions for people that prefer not to see them */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Images and media */
+img,
+picture,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+/* Inherit fonts for form elements */
+input,
+button,
+textarea,
+select {
+  font: inherit;
+}
+
+/* Remove built-in form typography styles */
+button,
+input,
+select,
+textarea {
+  background: none;
+  border: none;
+  outline: none;
+  color: inherit;
+}
+
+/* Remove text decoration from links */
+a {
+  text-decoration: none;
+  color: inherit;
+}

@@ -1,22 +1,47 @@
 import { defineStore } from 'pinia'
-import { fetchCurrentUser } from '@/api/userService'
+import { fetchCurrentUser, loginUser } from '@/api/userService'
 import type { User } from '@/api/types'
 
 export const useUserStore = defineStore('user', {
   state: () => ({
     currentUser: null as User | null,
+    accessToken: null as string | null,
+    processing: false,
   }),
+  getters: {
+    isAuthenticated: (state) => state.currentUser && state.accessToken,
+  },
   actions: {
-    async loadCurrentUser() {
+    async fetchCurrentUser() {
+      this.processing = true
       try {
-        this.currentUser = await fetchCurrentUser()
+        const fetchResponse = await fetchCurrentUser()
+        this.setCurrentUser(fetchResponse.user)
+        this.setAccessToken(fetchResponse.access)
       } catch (error) {
-        console.error('Failed to load current user:', error)
-        this.currentUser = null
+        this.unsetUser()
+      }
+      this.processing = false
+    },
+    async login(username: string, password: string) {
+      try {
+        const loginResponse = await loginUser(username, password)
+        this.setCurrentUser(loginResponse.user)
+        this.setAccessToken(loginResponse.access)
+        return loginResponse
+      } catch (error) {
+        this.unsetUser()
       }
     },
-  },
-  getters: {
-    isAuthenticated: (state) => !!state.currentUser,
+    setCurrentUser(user: User | null) {
+      this.currentUser = user
+    },
+    setAccessToken(token: string | null) {
+      this.accessToken = token
+    },
+    unsetUser() {
+      this.currentUser = null
+      this.accessToken = null
+    },
   },
 })

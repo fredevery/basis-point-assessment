@@ -1,0 +1,6 @@
+:root {
+  --primary-color: #3dfc72;
+  --secondary-color: #045e1c;
+  --layout-border-color: var(--primary-color);
+  --layout-background-color: rgba(0, 0, 0, 0.7);
+}
