@@ -114,17 +114,29 @@ export const usePingStore = defineStore('ping', {
       }
     },
     deactivateChain(pingId: number) {
-      this.activatedChains = this.activatedChains.filter((index) => index !== pingId)
+      this.activatedChains = this.activatedChains.filter(
+        (activePingId) => !this.isInSameChain(activePingId, pingId),
+      )
     },
     toggleChain(pingId: number) {
-      if (this.activatedChains.includes(pingId)) {
+      if (this.isInActiveChain(pingId)) {
         this.deactivateChain(pingId)
+        return false
       } else {
         this.activateChain(pingId)
+        return true
       }
+    },
+    isActivePingChain(chain: Ping[]) {
+      return this.activePingChains.some((c) => c.every((p) => chain.includes(p)))
     },
     isInActiveChain(pingId: number): boolean {
       return this.activePingChains.find((c) => c.find((p) => p.id === pingId)) !== undefined
+    },
+    isInSameChain(pingId1: number, pingId2: number): boolean {
+      return this.pingChains.some(
+        (chain) => chain.some((p) => p.id === pingId1) && chain.some((p) => p.id === pingId2),
+      )
     },
     getPingChain(pingId: number): Ping[] {
       return this.pingChains.find((c) => c.find((p) => p.id === pingId)) || []

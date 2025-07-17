@@ -84,12 +84,14 @@ function transitionBackToInitialView(duration = 600) {
   animate();
 }
 
-watch(pings, (newPings) => {
-  console.log('Pings updated:', newPings);
+const updatePointsAndRipples = () => {
   ripples.value = [];
   points.value = [];
 
-  newPings.forEach(ping => {
+  pings.value.filter((ping) => {
+    if (!activePingChains.value.length) return true; // Show all if no active chains
+    return activePingChains.value.some(chain => chain.some(p => p.id === ping.id));
+  }).forEach(ping => {
     points.value.push({
       lat: ping.latitude,
       lng: ping.longitude
@@ -107,11 +109,11 @@ watch(pings, (newPings) => {
     globe.ringsData(ripples.value);
     globe.pointsData(points.value);
   }
+}
 
-}, { immediate: true })
+watch(pings, updatePointsAndRipples, { immediate: true })
 
 watch(activePingChains, (newActiveChains) => {
-  console.log('Active ping chains updated:', newActiveChains);
   if (!globe || !camera) return;
   arcs.value = [];
   newActiveChains.forEach(chain => {
@@ -131,6 +133,7 @@ watch(activePingChains, (newActiveChains) => {
   });
   if (globe) {
     globe.arcsData(arcs.value);
+    updatePointsAndRipples();
   }
 }, { immediate: true });
 
@@ -186,8 +189,6 @@ onMounted(() => {
   camera.updateProjectionMatrix();
   camera.position.z = 300;
 
-  console.log('Camera position:', camera);
-
   controls = new TrackballControls(camera, renderer.domElement);
   controls.rotateSpeed = 1.0;
   controls.zoomSpeed = 1.2;
@@ -217,7 +218,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="spinning-globe">
-    <div ref="container" class="globe-container"></div>
+    <div ref="container" class="globe-container" :class="{ 'grabbing': controlsActive }"></div>
   </div>
 </template>
 
@@ -238,6 +239,10 @@ onBeforeUnmount(() => {
   min-height: 300px;
   background: transparent;
   overflow: hidden;
-  /* filter: invert(1) brightness(0.8) contrast(1.5); */
+  cursor: grab;
+
+  &.grabbing {
+    cursor: grabbing;
+  }
 }
 </style>

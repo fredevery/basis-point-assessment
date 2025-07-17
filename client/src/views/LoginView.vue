@@ -49,7 +49,7 @@ const onSubmit = async (event: Event) => {
         </div>
         <div class="field">
           <label class="label" for="username">Agent Code:</label>
-          <input v-model="username" id="username" class="input" type="text" placeholder="00X" />
+          <input v-model="username" id="username" class="input" type="text" placeholder="00X" autocomplete="off" />
         </div>
         <div class="field">
           <label class="label" for="password">Password:</label>

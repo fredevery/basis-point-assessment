@@ -2,10 +2,14 @@
 import { onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { usePingStore, type Ping } from '@/stores/ping'
+import { useUserStore } from '@/stores/user'
 
 // Reference: See SPEC.md - "Ping Management: Fetching and Displaying Pings"
 const pingStore = usePingStore()
-const { pings, pingChains, processing, error, activePing } = storeToRefs(pingStore)
+const { pings, pingChains, processing, error, activePing, activePingChains } = storeToRefs(pingStore)
+const userStore = useUserStore()
+const { currentUser } = storeToRefs(userStore)
+const showDashboard = ref(false)
 
 onMounted(() => {
   pingStore.fetchAllPings()
@@ -15,7 +19,13 @@ function togglePingChain(event: Event) {
   const checkbox = event.target as HTMLInputElement
   const pingId = parseInt(checkbox.value, 10)
 
-  pingStore.toggleChain(pingId)
+  const isActive = pingStore.toggleChain(pingId)
+  if (isActive) {
+    const lastPing = pingStore.getPingChain(pingId)[0];
+    setActivePing(lastPing);
+  } else {
+    pingStore.setActivePing(null)
+  }
 }
 
 function isActivePingChain(pingId: number): boolean {
@@ -49,10 +59,39 @@ function gotoLastPingInChain() {
   const lastPing = pingChain[0]
   setActivePing(lastPing)
 }
+
+function filterPingChainsForDisplay(pingChains: Ping[][]): Ping[][] {
+  return pingChains.filter(chain => {
+    if (!activePingChains.value.length) return true; // Show all chains if no active ping
+    return pingStore.isActivePingChain(chain);
+  })
+}
 </script>
 
 <template>
   <div class="dashboard-view">
+    <Transition name="v">
+      <div class="window active-agent-window" :class="{ 'minimized': showDashboard }" v-if="currentUser">
+        <div class="window-header" v-if="currentUser && !showDashboard">
+          <h3 class="window-title">Welcome Agent {{ currentUser.code_name }}</h3>
+        </div>
+        <div class="window-content">
+          <div v-if="!currentUser">Loading active agent...</div>
+          <div v-else-if="showDashboard">
+            <p><strong>Active Agent:</strong> {{ currentUser.code_name }}</p>
+          </div>
+          <div v-else>
+            <p>
+              Welcome to the Top Secret Ping Mainframe. As an agent, your mission is to monitor, respond, and track pings with precision. Stay
+              alert, and remember: every ping counts.
+            </p>
+            <div class="controls">
+              <button class="button is-secondary button-small" @click="showDashboard = !showDashboard">Proceed</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
     <Transition name="v">
       <div class="window active-ping-window" v-if="activePing">
         <div class="window-header">
@@ -80,7 +119,7 @@ function gotoLastPingInChain() {
     </Transition>
     <Transition name="v">
 
-      <div class="window ping-window" v-if="!activePing">
+      <div class="window ping-window" v-if="showDashboard">
         <div class="window-header">
           <h3 class="window-title">Pings</h3>
         </div>
@@ -101,25 +140,30 @@ function gotoLastPingInChain() {
                   <th width="10%"></th>
                 </tr>
               </thead>
-              <tbody>
-                <template v-for="(pings) in pingChains">
-                  <tr v-for="(ping, index) in pings" :key="ping.id"
-                    :class="{ 'last-ping': index === 0, 'hidden': index > 0 && !isActivePingChain(ping.id) }" class="ping-row">
-                    <td valign="middle">
-                      <label class="checkbox" v-if="index === 0">
-                        <input type="checkbox" @change="togglePingChain" :value="ping.id" :checked="isActivePingChain(ping.id)" />
-                        <span class="checkmark"></span>
-                      </label>
-                    </td>
-                    <td>{{ ping.user.code_name }}</td>
-                    <td>{{ index === 0 ? pings.length : "" }}</td>
-                    <td>{{ ping.latitude }}</td>
-                    <td>{{ ping.longitude }}</td>
-                    <td>{{ new Date(ping.timestamp).toLocaleString() }}</td>
-                    <td width="10%"><button @click="setActivePing(ping)" class="button button-xsmall">Focus</button></td>
-                  </tr>
+              <TransitionGroup name="ping-row" tag="tbody">
+                <template v-for="(pings) in filterPingChainsForDisplay(pingChains)">
+                  <template v-for="(ping, index) in pings" :key="ping.id">
+                    <tr v-if="index === 0 || isActivePingChain(ping.id)" :class="{ 'last-ping': index === 0 }" class="ping-row" :key="ping.id">
+                      <td valign="middle">
+                        <label class="checkbox" v-if="index === 0">
+                          <input type="checkbox" @change="togglePingChain" :value="ping.id" :checked="isActivePingChain(ping.id)" />
+                          <span class="checkmark"></span>
+                        </label>
+                        <template v-else>
+                          <div v-if="index < pings.length - 1" class="ping-connector">&#9500;</div>
+                          <div v-else class="ping-connector">&#9492;</div>
+                        </template>
+                      </td>
+                      <td>{{ ping.user.code_name }}</td>
+                      <td>{{ index === 0 ? pings.length : "" }}</td>
+                      <td>{{ ping.latitude }}</td>
+                      <td>{{ ping.longitude }}</td>
+                      <td>{{ new Date(ping.timestamp).toLocaleString() }}</td>
+                      <td width="10%"><button @click="setActivePing(ping)" class="button button-xsmall">Focus</button></td>
+                    </tr>
+                  </template>
                 </template>
-              </tbody>
+              </TransitionGroup>
             </table>
           </div>
         </div>
@@ -130,14 +174,48 @@ function gotoLastPingInChain() {
 
 <style scoped>
 .dashboard-view {
+  .active-agent-window {
+    transition: transform 300ms;
+
+    &.minimized {
+      transform: translate(0, 0);
+      font-size: 0.75rem;
+      top: 1rem;
+      left: 1rem;
+      width: 10rem;
+
+      .window-content {
+        padding: 0.75rem;
+
+        p {
+          padding: 0;
+          margin: 0;
+          line-height: 1;
+        }
+      }
+    }
+
+    .window-header {
+      justify-content: center;
+    }
+
+    .window-title {
+      font-size: 1.5rem;
+    }
+
+    .controls {
+      padding-top: 0.5rem;
+      text-align: center;
+    }
+  }
 
   .active-ping-window {
     width: 20vw;
     font-size: 0.8rem;
     transform: translate(0, 0);
     top: initial;
-    bottom: calc(50vh + 20px);
-    left: calc(50vw + 20px);
+    bottom: calc(50vh + 1rem);
+    left: calc(50vw + 1rem);
 
     .window-header {
       padding: 0.5rem;
@@ -158,29 +236,13 @@ function gotoLastPingInChain() {
         flex: 1;
       }
     }
-
-    &.v-leave-from,
-    &.v-enter-to {
-      transform: translate(0, 0) scale(1);
-      opacity: 1;
-    }
-
-    &.v-enter-active {
-      transition-delay: 100ms;
-    }
-
-    &.v-enter-from,
-    &.v-leave-to {
-      transform: translate(0, 0) scale(0.75);
-      opacity: 0;
-    }
   }
 
   .ping-window {
     width: calc(100vw - 40px);
     top: initial;
-    bottom: 20px;
-    left: 20px;
+    bottom: 1rem;
+    left: 1rem;
     transform: translate(0, 0);
 
     .window-header {
@@ -190,6 +252,11 @@ function gotoLastPingInChain() {
     .window-content {
       padding: 0;
     }
+  }
+
+  .active-agent-window,
+  .active-ping-window,
+  .ping-window {
 
     &.v-leave-from,
     &.v-enter-to {
@@ -217,6 +284,7 @@ function gotoLastPingInChain() {
       display: block;
       max-height: 25vh;
       overflow-y: auto;
+      overflow-x: hidden;
       scrollbar-width: thin;
       scrollbar-color: var(--primary-color) transparent;
 
@@ -257,7 +325,7 @@ function gotoLastPingInChain() {
       display: table;
       table-layout: fixed;
       width: 100%;
-      border: 1px solid transparent;
+      /* border: 1px solid transparent; */
 
 
       td {
@@ -265,9 +333,20 @@ function gotoLastPingInChain() {
         padding: 0.1rem 0.5rem;
 
         &:first-child {
-          padding-left: 2rem;
           width: 2rem;
+          text-align: center;
+          padding-block: 0;
+          position: relative;
+          overflow: hidden
         }
+      }
+
+      .ping-connector {
+        font-size: 1.5rem;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
       }
 
       &.hidden {
@@ -290,8 +369,27 @@ function gotoLastPingInChain() {
         background-color: var(--secondary-color);
       }
 
-      &:hover {
-        border: 1px solid var(--primary-color);
+      &.ping-row-enter-active,
+      &.ping-row-leave-active {
+        transition: transform 300ms, opacity 300ms, max-height 300ms;
+      }
+
+      &.ping-row-leave-active {
+        position: absolute;
+      }
+
+      &.ping-row-enter-from,
+      &.ping-row-leave-to {
+        transform: translateX(2rem);
+        opacity: 0;
+        max-height: 0;
+      }
+
+      &.ping-row-enter-to,
+      &.ping-row-leave-from {
+        transform: translateX(0%);
+        opacity: 1;
+        max-height: 3rem;
       }
     }
   }
@@ -303,6 +401,7 @@ function gotoLastPingInChain() {
     height: 1.2rem;
     margin: 0;
     vertical-align: middle;
+    cursor: pointer;
   }
 
   .checkbox input[type="checkbox"] {

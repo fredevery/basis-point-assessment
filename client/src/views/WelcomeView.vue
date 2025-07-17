@@ -20,6 +20,10 @@
 
 <style lang="css" scoped>
 .welcome-window {
+  .window-header {
+    justify-content: center;
+  }
+
   h1 {
     font-size: 1.5rem;
     text-align: center;
