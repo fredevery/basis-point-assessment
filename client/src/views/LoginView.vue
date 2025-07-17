@@ -1,12 +1,14 @@
 <script lang="ts" setup>
 import { ref, watch } from 'vue';
+import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user'
 
 const userStore = useUserStore();
 const router = useRouter();
+const { isAuthenticated } = storeToRefs(userStore);
 
-watch(() => userStore.isAuthenticated, (isAuthenticated) => {
+watch(isAuthenticated, (isAuthenticated) => {
   if (isAuthenticated) {
     router.push({ name: 'dashboard' });
   }
@@ -24,7 +26,6 @@ const onSubmit = async (event: Event) => {
   loading.value = true;
   try {
     const response = await userStore.login(username.value, password.value);
-    console.log('Login response:', response);
     if (response?.error) {
       error.value = response.error;
       return;

@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
-from .models import User
+from .models import Ping, User
 
 
 @admin.register(User)
@@ -32,3 +32,17 @@ class UserAdmin(BaseUserAdmin):
             },
         ),
     )
+
+    @admin.register(Ping)
+    class PingAdmin(admin.ModelAdmin):
+        list_display = (
+            "id",
+            "timestamp",
+            "user",
+            "latitude",
+            "longitude",
+            "parent_ping",
+        )
+        search_fields = ("user",)
+        list_filter = ("user", "timestamp")
+        ordering = ("-timestamp",)

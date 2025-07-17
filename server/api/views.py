@@ -1,3 +1,5 @@
+import random
+
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action
@@ -111,6 +113,14 @@ class CurrentUserView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+def get_random_latitude():
+    return random.uniform(-90.0, 90.0)
+
+
+def get_random_longitude():
+    return random.uniform(-180.0, 180.0)
+
+
 class PingViewSet(viewsets.ModelViewSet):
     queryset = Ping.objects.all()
     serializer_class = PingSerializer
@@ -140,12 +150,16 @@ class PingViewSet(viewsets.ModelViewSet):
         data = request.data.copy()
         data.update(
             {
-                "user": user.id,
+                "user_id": user.id,
                 "parent_ping": parent_ping.id,
             }
         )
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
+        print(user.id)
+        print(serializer.validated_data)
         self.perform_create(serializer)
         header = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=header)
+        return Response(
+            {"ping": serializer.data}, status=status.HTTP_201_CREATED, headers=header
+        )

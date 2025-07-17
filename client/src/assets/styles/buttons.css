@@ -10,3 +10,13 @@
     color: var(--secondary-color);
   }
 }
+
+.button-small {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+
+.button-xsmall {
+  padding: 0.1rem 0.25rem;
+  font-size: 0.75rem;
+}

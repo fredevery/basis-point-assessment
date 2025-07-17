@@ -20,8 +20,8 @@ userStore.fetchCurrentUser()
       </div>
     </main>
   </div>
-  <div class="crt-overlay"></div>
   <SpinningGlobe class="background-globe" v-if="userStore.isAuthenticated" />
+  <div class="crt-overlay"></div>
   <div class="background">
     <Transition name="logo-transition">
       <img class="logo" src="/images/MI6_Logo.webp" v-if="!userStore.isAuthenticated" />
@@ -43,9 +43,8 @@ userStore.fetchCurrentUser()
   left: 0;
   width: 100%;
   height: 100%;
-  pointer-events: none;
-  z-index: -1;
-  mix-blend-mode: multiply;
+  z-index: 0;
+  /* mix-blend-mode: multiply; */
   /* Ensure it stays in the background */
 }
 

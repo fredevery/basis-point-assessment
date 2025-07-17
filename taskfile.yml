@@ -1,11 +1,11 @@
-version: '3'
+version: "3"
 
 tasks:
   "client:build":
     desc: Build the client Docker image using Docker Compose
     cmds:
       - docker compose build client
-  
+
   "client:sh":
     desc: Run the client Docker container using Docker Compose and open a shell
     cmds:
@@ -16,13 +16,13 @@ tasks:
     desc: Start the client service using Docker Compose in detached mode
     cmds:
       - docker compose up client
-  
+
   "dc":
     desc: Run Docker Compose commands
     cmds:
       - docker compose {{.CLI_ARGS}}
     interactive: true
-  
+
   "dj":
     desc: Run Django management commands in the server container
     cmds:
@@ -44,16 +44,32 @@ tasks:
     cmds:
       - docker compose run --rm server python manage.py migrate
 
+  "server:reset:db":
+    desc: Reset the database by dropping and recreating it, then running migrations
+    cmds:
+      - docker compose run --rm server python manage.py reset_db --noinput
+      - docker compose run --rm server python manage.py migrate
+
+  "server:seed":
+    desc: Run Django seed command in the server container
+    cmds:
+      - docker compose run --rm server python manage.py seed_db
+
   "server:sh":
     desc: Run the server Docker container using Docker Compose and SSH into it
     cmds:
       - docker compose run --rm -it server /bin/sh
-  
+
+  "server:show:urls":
+    desc: Show Django URLs in the server container
+    cmds:
+      - docker compose run --rm server python manage.py show_urls
+
   "server:test":
     desc: Run Django tests in the server container
     cmds:
       - docker compose run --rm server python manage.py test {{.CLI_ARGS}}
-      
+
   "server:up":
     desc: Start the server service using Docker Compose in detached mode
     cmds:

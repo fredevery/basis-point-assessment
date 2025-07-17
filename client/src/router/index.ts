@@ -9,19 +9,19 @@ const routes = [
     path: '/',
     name: 'home',
     component: WelcomeView,
-    meta: { transition: 'vertical-slide' },
+    meta: { transition: 'v' },
   },
   {
     path: '/dashboard',
     name: 'dashboard',
     component: DashboardView,
-    meta: { requiresAuth: true, transition: 'vertical-slide' },
+    meta: { requiresAuth: true, transition: 'v' },
   },
   {
     path: '/login',
     name: 'login',
     component: LoginView,
-    meta: { transition: 'vertical-slide' },
+    meta: { transition: 'v' },
   },
 ]
 

@@ -12,18 +12,18 @@
     opacity 300ms;
   width: 50vw;
 
-  &.vertical-slide-leave-from,
-  &.vertical-slide-enter-to {
+  &.v-leave-from,
+  &.v-enter-to {
     transform: translate(-50%, -50%) scale(1);
     opacity: 1;
   }
 
-  &.vertical-slide-enter-active {
+  &.v-enter-active {
     transition-delay: 100ms;
   }
 
-  &.vertical-slide-enter-from,
-  &.vertical-slide-leave-to {
+  &.v-enter-from,
+  &.v-leave-to {
     transform: translate(-50%, -50%) scale(0.75);
     opacity: 0;
   }
@@ -32,6 +32,9 @@
 .window-header {
   padding: 1rem;
   border-bottom: 1px solid var(--layout-border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .window-title {
